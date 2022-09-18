@@ -132,57 +132,98 @@ void Bag::setCustomerPurchaseTime(const nlohmann::json &purchase_json) {
 
 // This method will set the Customer's first name
 void Bag::setCustomerFirstName(const nlohmann::json &purchase_json) {
-    if(purchase_json.contains("FIRST_NAME")){
-        this->custFirstName = purchase_json.at("FIRST_NAME");
-    } else {
+    // if json structure already has a customer id -> returning customer!
+    if(purchase_json.contains("CUSTOMER_ID")){
+        // assign default
         this->custFirstName = " ";
+    } else {
+        // now you should check if First Name was provided or not!
+        if(purchase_json.contains("FIRST_NAME")){
+            this->custFirstName = purchase_json.at("FIRST_NAME");
+        } else {
+            throw std::runtime_error("FIRST_NAME key not found: " + std::string(purchase_json));
+        }
     }
 }
 
 // This method will set the Customer's last name
 void Bag::setCustomerLastName(const nlohmann::json &purchase_json) {
-    if(purchase_json.contains("LAST_NAME")){
-        this->custLastName = purchase_json.at("LAST_NAME");
-    } else {
+    // if json structure already has a customer id -> returning customer!
+    if(purchase_json.contains("CUSTOMER_ID")){
+        // assign default
         this->custLastName = " ";
+    } else {
+        // now you should check if Last Name was provided or not!
+        if(purchase_json.contains("LAST_NAME")){
+            this->custLastName = purchase_json.at("LAST_NAME");
+        } else {
+            throw std::runtime_error("LAST_NAME key not found: " + std::string(purchase_json));
+        }
     }
 }
 
 // This method will set the Customer's address
 void Bag::setCustomerAddress(const nlohmann::json &purchase_json) {
-    if(purchase_json.contains("ADDRESS")){
-        this->custAddress = purchase_json.at("ADDRESS");
-    } else {
+    // if json structure already has a customer id -> returning customer!
+    if(purchase_json.contains("CUSTOMER_ID")){
+        // assign default
         this->custAddress = " ";
+    } else {
+        // now you should check if Address was provided or not!
+        if(purchase_json.contains("ADDRESS")){
+            this->custAddress = purchase_json.at("ADDRESS");
+        } else {
+            throw std::runtime_error("ADDRESS key not found: " + std::string(purchase_json));
+        }
     }
 }
 
 // This method will set the Customer's city
 void Bag::setCustomerCity(const nlohmann::json &purchase_json) {
-    if(purchase_json.contains("CITY")){
-        this->custCity = purchase_json.at("CITY");
-    } else {
+    // if json structure already has a customer id -> returning customer!
+    if(purchase_json.contains("CUSTOMER_ID")){
+        // assign default
         this->custCity = " ";
+    } else {
+        // now you should check if City was provided or not!
+        if(purchase_json.contains("CITY")){
+            this->custCity = purchase_json.at("CITY");
+        } else {
+            throw std::runtime_error("CITY key not found: " + std::string(purchase_json));
+        }
     }
 }
 
 // This method will set the Customer's state
 void Bag::setCustomerState(const nlohmann::json &purchase_json) {
-    if(purchase_json.contains("STATE")){
-        this->custState = purchase_json.at("STATE");
-    } else {
+    // if json structure already has a customer id -> returning customer!
+    if(purchase_json.contains("CUSTOMER_ID")){
+        // assign default
         this->custState = " ";
+    } else {
+        // now you should check if State was provided or not!
+        if(purchase_json.contains("STATE")){
+            this->custState = purchase_json.at("STATE");
+        } else {
+            throw std::runtime_error("STATE key not found: " + std::string(purchase_json));
+        }
     }
 }
 
 // This method will set the Customer's zip
 void Bag::setCustomerZip(const nlohmann::json &purchase_json) {
-    if(purchase_json.contains("ZIP")){
-        this->custZip = purchase_json.at("ZIP");
-    } else {
+    // if json structure already has a customer id -> returning customer!
+    if(purchase_json.contains("CUSTOMER_ID")){
+        // assign default
         this->custZip = " ";
+    } else {
+        // now you should check if State was provided or not!
+        if(purchase_json.contains("ZIP")){
+            this->custZip = purchase_json.at("ZIP");
+        } else {
+            throw std::runtime_error("ZIP key not found: " + std::string(purchase_json));
+        }
     }
-
 }
 
 // This method will set the Customer's Purchase details
@@ -199,6 +240,7 @@ void Bag::setCustomerId(const nlohmann::json &purchase_json) {
     if(purchase_json.contains("CUSTOMER_ID")){
         this->custId = purchase_json.at("CUSTOMER_ID");
     } else {
+        // This is where we will use SQL to insert customer data!
         this->custId = -999;
     }
 }
