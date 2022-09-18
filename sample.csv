@@ -1,2 +1,0 @@
-purchase_ts|first_name|last_name|address|city|state|zip|purchase_details
-2022-08-14 10:15:00|Michael|Bohr|123 Main Street|Chicago|IL|673003|[{"SKU":"EXEYI21","UNITS":7,"UNIT_PRICE":3.99},{"UNITS":3,"SKU":"AXEYI43","UNIT_PRICE":7.99}]
