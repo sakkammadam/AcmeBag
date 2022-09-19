@@ -38,7 +38,7 @@ public:
     Bag();
 
     // Initialization Constructor
-    Bag(const nlohmann::json &purchase_json);
+    explicit Bag(const nlohmann::json &purchase_json);
 
     // Setters
     // This method will set the site brand the customer is on
@@ -67,6 +67,9 @@ public:
 
     // This method will set the Customer's Purchase details
     void setCustomerPurchaseDetails(const nlohmann::json &purchase_json);
+
+    // This method will set the Customer's Purchase totals
+    void setCustomerPurchaseTotals();
 
     // This method will set the Customer id
     void setCustomerId(const nlohmann::json &purchase_json);
@@ -100,20 +103,27 @@ public:
     nlohmann::json getCustomerPurchases();
 
     // This method will return the customer id
-    int getCustomerId();
+    int getCustomerId() const;
 
     // This method will calculate the total of customer's purchases
-    double getCustomerTotals();
+    double getCustomerTotals() const;
 
     // Operational Methods
     // Simple display
     void display();
 
-    // This method will leverage private data members and insert a record into CUSTOMER table in ACMEDB
+    // This method will leverage private data members and insert a record into CUSTOMER table in ACME schema
     void insertCustomerRecord();
 
     // This method will retrieve customerId from the database for new customers
     void retrieveCustomerIdDB();
+
+    // This method will retrieve brandId from the database
+    int retrieveBrandId();
+
+    // This method will insert transaction totals from each brand into CUSTOMER_BRAND_TRANSACTIONS table in ACME schema
+    // it will reference Customer id, their purchase timestamps and the total across their purchases for a brand
+    void insertCustomerBrandTotals();
 
     // Entry method!
     void entryMethod();
