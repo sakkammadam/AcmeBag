@@ -18,13 +18,13 @@ int main() {
 
     // JSON native file
     std::fstream jsonFile;
-    jsonFile.open("/home/sakkammadam/CLionProjects/cis_554/AcmeBag/sample_mix_bad.json", std::ios::in);
+    jsonFile.open("/home/sakkammadam/CLionProjects/cis_554/AcmeBag/sample_continuity.json", std::ios::in);
     nlohmann::json jsonData = nlohmann::json::parse(jsonFile);
     //std::cout << std::setw(4) << jsonData << std::endl;
     // let's iterate over jsonData using an iterator container and load into the vector - acmeBagVector
     for(nlohmann::json::iterator it = jsonData.begin(); it != jsonData.end(); ++it){
         try {
-            acmeBaseObj = new Bag(*it);
+            acmeBaseObj = new Continuity(*it);
             acmeBagVector.push_back(acmeBaseObj);
             //acmeBaseObj->display();
         }
