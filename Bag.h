@@ -14,6 +14,9 @@
 // Function to validate timestamps!
 int validate_json_timestamp(const std::string &timestampStr);
 
+// Function to read connection file
+std::string read_connection();
+
 class Bag {
     // Private data members!
 private:
@@ -103,7 +106,18 @@ public:
     double getCustomerTotals();
 
     // Operational Methods
+    // Simple display
     void display();
+
+    // This method will leverage private data members and insert a record into CUSTOMER table in ACMEDB
+    void insertCustomerRecord();
+
+    // This method will retrieve customerId from the database for new customers
+    void retrieveCustomerIdDB();
+
+    // Entry method!
+    void entryMethod();
+
 };
 
 
