@@ -6,6 +6,7 @@
 #include <vector>
 #include "nlohmann/json.hpp"
 #include "Bag.h"
+#include "Continuity.h"
 
 int main() {
     // let's create a vector to hold our class objects
