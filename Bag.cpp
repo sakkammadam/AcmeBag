@@ -10,6 +10,7 @@
 #include "nlohmann/json.hpp"
 #include "pqxx/pqxx"
 
+
 // function to validate timestamp
 int validate_json_timestamp(const std::string &timestampStr){
     // initialize empty variable of struct tm
@@ -128,7 +129,8 @@ Bag::Bag(const nlohmann::json &purchase_json) {
     setCustomerPurchaseDetails(purchase_json);
     // set id
     setCustomerId(purchase_json);
-    // Exception will be raised at different steps below,
+    // calculate purchase totals
+    setCustomerPurchaseTotals();
 }
 
 // Setters
@@ -256,10 +258,24 @@ void Bag::setCustomerPurchaseDetails(const nlohmann::json &purchase_json) {
     }
 }
 
+// This method will set the Customer's Purchase totals
+void Bag::setCustomerPurchaseTotals(){
+    // get all purchase details
+    nlohmann::json purchaseDetails = getCustomerPurchases();
+    // declare a sum variable
+    double total = 0;
+    // iterate over the purchase details
+    for(nlohmann::json::iterator it = purchaseDetails.begin(); it != purchaseDetails.end(); ++it){
+        total += static_cast<double>(it->at("UNIT_PRICE")) * static_cast<int>(it->at("UNITS"));
+    }
+    // let's assign to this private data member
+    this->custTotal = total;
+}
+
 // This method will set the Customer id
 void Bag::setCustomerId(const nlohmann::json &purchase_json) {
     if(purchase_json.contains("CUSTOMER_ID")){
-        this->custId = purchase_json.at("CUSTOMER_ID");
+        this->custId =  static_cast<int>(purchase_json.at("CUSTOMER_ID"));
     } else {
         // Assign a simple default
         this->custId = -999;
@@ -313,21 +329,13 @@ nlohmann::json Bag::getCustomerPurchases() {
 }
 
 // This method will return the customer id
-int Bag::getCustomerId() {
+int Bag::getCustomerId() const {
     return this->custId;
 }
 
-// This method will calculate the total of customer's purchases
-double Bag::getCustomerTotals() {
-    // get all purchase details
-    nlohmann::json purchaseDetails = getCustomerPurchases();
-    // declare a sum variable
-    double total = 0;
-    // iterate over the purchase details
-    for(nlohmann::json::iterator it = purchaseDetails.begin(); it != purchaseDetails.end(); ++it){
-        total += static_cast<double>(it->at("UNIT_PRICE")) * static_cast<int>(it->at("UNITS"));
-    }
-    return total;
+// This method will return the total of customer's purchases
+double Bag::getCustomerTotals() const {
+    return this->custTotal;
 }
 
 // Operational Methods
@@ -403,7 +411,8 @@ void Bag::retrieveCustomerIdDB() {
         // Using the connection object, we will create a transaction to run our SQL instructions against
         pqxx::work txn{cnx};
 
-        // Now we will build the SQL to be inserted using private data members
+        // Now we will build the SQL to be selected using private data members
+        // This will retrieve customerId
         std::string buildSQL =
                 std::string("SELECT ID FROM ACME.CUSTOMER WHERE FIRST_NAME = ") +
                 "'" + this->getCustomerFirstName() + "'" + " AND LAST_NAME = " +
@@ -416,10 +425,13 @@ void Bag::retrieveCustomerIdDB() {
         // We will supply the buildSQL and execute within the transaction
         pqxx::result insertRes{txn.exec(buildSQL)};
 
+        // Check result set...
         if (!insertRes.empty()) {
             int totCol = insertRes.columns();
+            // iterate over the result set container..
             for (auto row: insertRes) {
                 for (int i = 0; i < totCol; i++) {
+                    // re-assigning the private data member custId to value from the DB
                     this->custId = row[i].as<int>();
                 }
             }
@@ -432,7 +444,95 @@ void Bag::retrieveCustomerIdDB() {
         std::cout << "Query was:; " << e.query() << std::endl;
         std::cerr << "Query was:; " << e.query() << std::endl;
     }
+}
 
+// This method will retrieve brandId from the database
+int Bag::retrieveBrandId(){
+    try {
+        // let's use the function to get the connection string
+        std::string cnxDetails = read_connection();
+
+        // let's use the connection string to set up a connection object using PQXX library
+        pqxx::connection cnx{cnxDetails};
+
+        // Using the connection object, we will create a transaction to run our SQL instructions against
+        pqxx::work txn{cnx};
+
+        // Now we will build the SQL to retrieve the brandId using private data members
+        std::string buildSQL =
+                std::string("SELECT MAX(ID) FROM ACME.BRANDS WHERE DESCRIPTION = ") +
+                "'" + this->getCustomerBrand() + "'" + ";";
+
+        // We will supply the buildSQL and execute within the transaction
+        pqxx::result insertRes{txn.exec(buildSQL)};
+
+        // Check result set...
+        if (!insertRes.empty()) {
+            int totCol = insertRes.columns();
+            // iterate over the result set container..
+            for (auto row: insertRes) {
+                for (int i = 0; i < totCol; i++) {
+                    // let's return the brand id
+                    return row[i].as<int>();
+                }
+            }
+        }
+        txn.commit();
+    }
+    catch(pqxx::sql_error const &e){
+        std::cout << "SQL error: " << e.what() << std::endl;
+        std::cerr << "SQL error: " << e.what() << std::endl;
+        std::cout << "Query was:; " << e.query() << std::endl;
+        std::cerr << "Query was:; " << e.query() << std::endl;
+    }
+    return 0;
+}
+
+// This method will insert transaction totals from each brand into CUSTOMER_BRAND_TRANSACTIONS table in ACME schema
+// it will reference Customer id, their purchase timestamps and the total across their purchases for a brand
+void Bag::insertCustomerBrandTotals(){
+    try {
+        // let's use the function to get the connection string
+        std::string cnxDetails = read_connection();
+
+        // let's use the connection string to set up a connection object using PQXX library
+        pqxx::connection cnx{cnxDetails};
+
+        // Using the connection object, we will create a transaction to run our SQL instructions against
+        pqxx::work txn{cnx};
+
+        // Let's set the brand id
+        int brandId = retrieveBrandId();
+
+        // Now we will build the SQL to be inserted using private data members
+        std::string buildSQL =
+                std::string("INSERT INTO ACME.CUSTOMER_BRAND_SALES(PURCHASE_TS,PURCHASE_DT,CUSTOMER_ID,BRAND_ID,SALES_TOTAL) VALUES(") +
+                "TO_TIMESTAMP(" + "'" + this->getCustomerPurchaseTime() + "'" + "," + "'" + "YYYY-MM-DD HH24:MI:SS" + "'" + ")" + "," +
+                "TO_TIMESTAMP(" + "'" + this->getCustomerPurchaseTime() + "'" + "," + "'" + "YYYY-MM-DD HH24:MI:SS" + "'" + ")::DATE" + "," +
+                std::to_string(this->getCustomerId()) + "," +
+                std::to_string(brandId) + "," +
+                std::to_string(this->getCustomerTotals()) + ")" + ";";
+
+        // We will supply the buildSQL and execute within the transaction
+        pqxx::result insertRes{txn.exec(buildSQL)};
+
+        if (!insertRes.empty()) {
+            int totCol = insertRes.columns();
+            for (auto row: insertRes) {
+                for (int i = 0; i < totCol; i++) {
+                    std::cout << row[i].c_str() << "|";
+                }
+                std::cout << std::endl;
+            }
+        }
+        txn.commit();
+    }
+    catch(pqxx::sql_error const &e){
+        std::cout << "SQL error: " << e.what() << std::endl;
+        std::cerr << "SQL error: " << e.what() << std::endl;
+        std::cout << "Query was:; " << e.query() << std::endl;
+        std::cerr << "Query was:; " << e.query() << std::endl;
+    }
 }
 
 // Entry method!
@@ -441,13 +541,23 @@ void Bag::entryMethod() {
     // Flow -
     // 1) Check the customerId -
     //  a) If -999, this is a new customer, will create an entry in ACME.CUSTOMER table
+    //      i) Perform additional checks to see if data is valid or not.
     //  b) If not -999, this is existing customer, will NOT create an entry in ACME.CUSTOMER table
     if(getCustomerId() == -999 && getCustomerFirstName() != " " && getCustomerLastName() != " " &&
     getCustomerAddress() != " " && getCustomerState() != " " && getCustomerCity() != " " &&
     getCustomerZip() != " "){
-        // The additional checks above makes sure there is no invalid customers
-        // insertCustomerRecord();
+        // Insert records into Customer table
+        insertCustomerRecord();
+        // Retrieve customer id associated with insert
+        // SA: I feel an ORM could help by removing this retrieval method
         retrieveCustomerIdDB();
+        // Insert records into Customer Brand Sales table
+        insertCustomerBrandTotals();
+    } else if (getCustomerId() != -999){
+        // This is existing customer flow - insert records into Customer Brand Sales table
+        insertCustomerBrandTotals();
+    } else {
+        throw std::runtime_error("Unexpected behavior path!");
     }
 }
 
