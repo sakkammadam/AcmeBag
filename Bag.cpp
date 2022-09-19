@@ -6,7 +6,9 @@
 #include <array>
 #include <stdexcept>
 #include <string>
+#include <fstream>
 #include "nlohmann/json.hpp"
+#include "pqxx/pqxx"
 
 // function to validate timestamp
 int validate_json_timestamp(const std::string &timestampStr){
@@ -68,6 +70,21 @@ int validate_json_timestamp(const std::string &timestampStr){
     }
     // all edge cases covered!
     return 1;
+}
+
+std::string read_connection() {
+    // declare strings
+    std::string fileLine;
+    std::string cnxFile = "/home/sakkammadam/CLionProjects/cis_554/AcmeBag/cnx.dat";
+    // declare filestream to hold the file
+    std::fstream fileRaw;
+    fileRaw.open(cnxFile, std::ios::in);
+    // use the filestream and getline, read individual lines of the file
+    while (getline(fileRaw, fileLine)) {
+        // read each line as a stringstream object
+        std::stringstream str(fileLine);
+    }
+    return fileLine;
 }
 
 
@@ -244,7 +261,7 @@ void Bag::setCustomerId(const nlohmann::json &purchase_json) {
     if(purchase_json.contains("CUSTOMER_ID")){
         this->custId = purchase_json.at("CUSTOMER_ID");
     } else {
-        // This is where we will use SQL to insert customer data!
+        // Assign a simple default
         this->custId = -999;
     }
 }
@@ -314,18 +331,123 @@ double Bag::getCustomerTotals() {
 }
 
 // Operational Methods
+// Simple display
 void Bag::display() {
-    std::cout << getCustomerPurchaseTime()
+    std::cout << getCustomerId() << '|' << getCustomerPurchaseTime()
     << '|' << getCustomerFirstName() << '|' << getCustomerLastName() << '|' << getCustomerAddress()
     << '|' << getCustomerCity() << '|' << getCustomerState() << '|' << getCustomerZip()
     << '|' << getCustomerTotals() << '|' << getCustomerPurchases() << std::endl;
 }
 
+// This method will leverage private data members and insert a record into CUSTOMER table in ACMEDB
+void Bag::insertCustomerRecord() {
+    try {
+        // let's use the function to get the connection string
+        std::string cnxDetails = read_connection();
 
+        // let's use the connection string to set up a connection object using PQXX library
+        pqxx::connection cnx{cnxDetails};
 
+        // Using the connection object, we will create a transaction to run our SQL instructions against
+        pqxx::work txn{cnx};
 
+        // Let's set the brand flags while we are here
+        char newArmyFlg = (this->getCustomerBrand() == "NEW_ARMY") ? '1' : '0';
+        char appleMonarchyFlg = (this->getCustomerBrand() == "APPLE_MONARCHY") ? '1' : '0';
+        char continuityFlg = (this->getCustomerBrand() == "CONTINUITY") ? '1' : '0';
 
+        // Now we will build the SQL to be inserted using private data members
+        std::string buildSQL =
+                std::string("INSERT INTO ACME.CUSTOMER(FIRST_NAME, LAST_NAME, ADDRESS, CITY, STATE, ZIP, NA_CUST_FLG, AM_CUST_FLG, CN_CUST_FLG) VALUES(") +
+                "'" + this->getCustomerFirstName() + "'" + "," +
+                "'" + this->getCustomerLastName() + "'" + "," +
+                "'" + this->getCustomerAddress() + "'" + "," +
+                "'" + this->getCustomerCity() + "'" + "," +
+                "'" + this->getCustomerState() + "'" + "," +
+                "'" + this->getCustomerZip() + "'" + "," +
+                "'" + newArmyFlg + "'" + "," +
+                "'" + appleMonarchyFlg + "'" + ',' +
+                "'" + continuityFlg + "'" + ")" + ";";
 
+        // We will supply the buildSQL and execute within the transaction
+        pqxx::result insertRes{txn.exec(buildSQL)};
 
+        if (!insertRes.empty()) {
+            int totCol = insertRes.columns();
+            for (auto row: insertRes) {
+                for (int i = 0; i < totCol; i++) {
+                    std::cout << row[i].c_str() << "|";
+                }
+                std::cout << std::endl;
+            }
+        }
+        txn.commit();
+    }
+    catch(pqxx::sql_error const &e){
+        std::cout << "SQL error: " << e.what() << std::endl;
+        std::cerr << "SQL error: " << e.what() << std::endl;
+        std::cout << "Query was:; " << e.query() << std::endl;
+        std::cerr << "Query was:; " << e.query() << std::endl;
+    }
+}
 
+// This method will retrieve customerId from the database for new customers
+void Bag::retrieveCustomerIdDB() {
+    try {
+        // let's use the function to get the connection string
+        std::string cnxDetails = read_connection();
+
+        // let's use the connection string to set up a connection object using PQXX library
+        pqxx::connection cnx{cnxDetails};
+
+        // Using the connection object, we will create a transaction to run our SQL instructions against
+        pqxx::work txn{cnx};
+
+        // Now we will build the SQL to be inserted using private data members
+        std::string buildSQL =
+                std::string("SELECT ID FROM ACME.CUSTOMER WHERE FIRST_NAME = ") +
+                "'" + this->getCustomerFirstName() + "'" + " AND LAST_NAME = " +
+                "'" + this->getCustomerLastName() + "'" + " AND ADDRESS = " +
+                "'" + this->getCustomerAddress() + "'" + " AND CITY = " +
+                "'" + this->getCustomerCity() + "'" + " AND STATE = " +
+                "'" + this->getCustomerState() + "'" + " AND ZIP = " +
+                "'" + this->getCustomerZip() + "'" + ";";
+
+        // We will supply the buildSQL and execute within the transaction
+        pqxx::result insertRes{txn.exec(buildSQL)};
+
+        if (!insertRes.empty()) {
+            int totCol = insertRes.columns();
+            for (auto row: insertRes) {
+                for (int i = 0; i < totCol; i++) {
+                    this->custId = row[i].as<int>();
+                }
+            }
+        }
+        txn.commit();
+    }
+    catch(pqxx::sql_error const &e){
+        std::cout << "SQL error: " << e.what() << std::endl;
+        std::cerr << "SQL error: " << e.what() << std::endl;
+        std::cout << "Query was:; " << e.query() << std::endl;
+        std::cerr << "Query was:; " << e.query() << std::endl;
+    }
+
+}
+
+// Entry method!
+void Bag::entryMethod() {
+    // This will be the primary method for Bag Class
+    // Flow -
+    // 1) Check the customerId -
+    //  a) If -999, this is a new customer, will create an entry in ACME.CUSTOMER table
+    //  b) If not -999, this is existing customer, will NOT create an entry in ACME.CUSTOMER table
+    if(getCustomerId() == -999 && getCustomerFirstName() != " " && getCustomerLastName() != " " &&
+    getCustomerAddress() != " " && getCustomerState() != " " && getCustomerCity() != " " &&
+    getCustomerZip() != " "){
+        // The additional checks above makes sure there is no invalid customers
+        // insertCustomerRecord();
+        retrieveCustomerIdDB();
+    }
+}
 
