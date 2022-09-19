@@ -252,6 +252,14 @@ void Bag::setCustomerZip(const nlohmann::json &purchase_json) {
 // This method will set the Customer's Purchase details
 void Bag::setCustomerPurchaseDetails(const nlohmann::json &purchase_json) {
     if(purchase_json.contains("PURCHASE_DETAILS")){
+        nlohmann::json purchaseJSON = purchase_json.at("PURCHASE_DETAILS");
+        // let's iterate over PURCHASE_DETAILS to validate if we have all the keys we need
+        for(nlohmann::json::iterator it = purchaseJSON.begin(); it != purchaseJSON.end(); ++it){
+            if(!it->contains("SKU") || !it->contains("UNITS") || !it->contains("UNIT_PRICE")){
+                throw std::runtime_error("PURCHASE_DETAILS missing one of SKU/UNITS/UNIT_PRICE");
+            }
+        }
+        // all cases satisfied, lets set the custPurchases private data member
         this->custPurchases = purchase_json.at("PURCHASE_DETAILS");
     } else {
         throw std::runtime_error("PURCHASE_DETAILS key not found: " + std::string(purchase_json.dump()));
@@ -375,7 +383,7 @@ void Bag::insertCustomerRecord() {
                 "'" + this->getCustomerZip() + "'" + "," +
                 "'" + newArmyFlg + "'" + "," +
                 "'" + appleMonarchyFlg + "'" + ',' +
-                "'" + continuityFlg + "'" + ")" + ";";
+                "'" + continuityFlg + "'" + ") ON CONFLICT DO NOTHING" + ";";
 
         // We will supply the buildSQL and execute within the transaction
         pqxx::result insertRes{txn.exec(buildSQL)};
@@ -511,7 +519,7 @@ void Bag::insertCustomerBrandSaleTotals(){
                 "TO_TIMESTAMP(" + "'" + this->getCustomerPurchaseTime() + "'" + "," + "'" + "YYYY-MM-DD HH24:MI:SS" + "'" + ")::DATE" + "," +
                 std::to_string(this->getCustomerId()) + "," +
                 std::to_string(brandId) + "," +
-                std::to_string(this->getCustomerTotals()) + ")" + ";";
+                std::to_string(this->getCustomerTotals()) + ") ON CONFLICT DO NOTHING" + ";";
 
         // We will supply the buildSQL and execute within the transaction
         pqxx::result insertRes{txn.exec(buildSQL)};
