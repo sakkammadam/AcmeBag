@@ -123,10 +123,18 @@ public:
 
     // This method will insert transaction totals from each brand into CUSTOMER_BRAND_TRANSACTIONS table in ACME schema
     // it will reference Customer id, their purchase timestamps and the total across their purchases for a brand
-    void insertCustomerBrandTotals();
+    void insertCustomerBrandSaleTotals();
+
+    // This method will insert customer's transactions into brand specific tables within brand specific schemas
+    // it will reference Customer id, their purchase timestamps and their purchases for a brand
+    // We will make this a pure virtual method
+    // It will receive its implementation from classes specific to brand
+    virtual void insertCustomerTransactions() = 0;
 
     // Entry method!
-    void entryMethod();
+    // This is being made virtual so that it's implementation can be overridden in derived class
+    // And we want to do this at run-time through a pointer to the base class.
+    virtual void entryMethod();
 
 };
 

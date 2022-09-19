@@ -490,7 +490,7 @@ int Bag::retrieveBrandId(){
 
 // This method will insert transaction totals from each brand into CUSTOMER_BRAND_TRANSACTIONS table in ACME schema
 // it will reference Customer id, their purchase timestamps and the total across their purchases for a brand
-void Bag::insertCustomerBrandTotals(){
+void Bag::insertCustomerBrandSaleTotals(){
     try {
         // let's use the function to get the connection string
         std::string cnxDetails = read_connection();
@@ -536,6 +536,8 @@ void Bag::insertCustomerBrandTotals(){
 }
 
 // Entry method!
+// This is being made virtual so that it's implementation can be overridden in derived class
+// And we want to do this at run-time through a pointer to the base class.
 void Bag::entryMethod() {
     // This will be the primary method for Bag Class
     // Flow -
@@ -552,12 +554,13 @@ void Bag::entryMethod() {
         // SA: I feel an ORM could help by removing this retrieval method
         retrieveCustomerIdDB();
         // Insert records into Customer Brand Sales table
-        insertCustomerBrandTotals();
+        insertCustomerBrandSaleTotals();
     } else if (getCustomerId() != -999){
         // This is existing customer flow - insert records into Customer Brand Sales table
-        insertCustomerBrandTotals();
+        insertCustomerBrandSaleTotals();
     } else {
         throw std::runtime_error("Unexpected behavior path!");
     }
 }
+
 
