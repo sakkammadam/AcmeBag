@@ -17,6 +17,7 @@ int validate_json_timestamp(const std::string &timestampStr);
 class Bag {
     // Private data members!
 private:
+    std::string custBrand;
     std::string custPurchaseTime;
     std::string custFirstName;
     std::string custLastName;
@@ -37,6 +38,9 @@ public:
     Bag(const nlohmann::json &purchase_json);
 
     // Setters
+    // This method will set the site brand the customer is on
+    void setCustomerBrand(const nlohmann::json &purchase_json);
+
     // This method will set the Customer's purchase time
     void setCustomerPurchaseTime(const nlohmann::json &purchase_json);
 
@@ -65,6 +69,9 @@ public:
     void setCustomerId(const nlohmann::json &purchase_json);
 
     // Getters
+    // This method will get the site brand the customer is on
+    std::string getCustomerBrand();
+
     // This method will return the customer's purchase time
     std::string getCustomerPurchaseTime();
 
