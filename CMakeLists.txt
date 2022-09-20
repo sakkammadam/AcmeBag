@@ -3,7 +3,7 @@ project(AcmeBag)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(AcmeBag main.cpp Bag.cpp Bag.h Continuity.cpp Continuity.h)
+add_executable(AcmeBag main.cpp Bag.cpp Bag.h Continuity.cpp Continuity.h NewArmy.cpp NewArmy.h)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpqxx -lpq")
 set(PQXX /usr/include/pqxx)
 find_library(PQXX_LIB pqxx)
