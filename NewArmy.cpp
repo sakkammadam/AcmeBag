@@ -3,18 +3,20 @@
 //
 
 #include "NewArmy.h"
-#include "Bag.h"
+#include "Continuity.h"
 #include <string>
 #include <fstream>
 #include "nlohmann/json.hpp"
 #include "pqxx/pqxx"
 
 
-NewArmy::NewArmy(const nlohmann::json &purchase_json) : Bag(purchase_json) {
+NewArmy::NewArmy(const nlohmann::json &purchase_json) : Continuity(purchase_json) {
     // Initialization will follow Bag Constructor
     // We will re-calculate the purchase totals
 }
 
+// This method will calculate the sales totals across all transactions for the customer
+// This method is override in NewArmy to take into account discounts presented to the customer
 void NewArmy::setCustomerPurchaseTotals() {
     // get all purchase details
     nlohmann::json purchaseDetails = getCustomerPurchases();
@@ -48,6 +50,7 @@ void NewArmy::setCustomerPurchaseTotals() {
     this->custTotalWDiscount = total;
 }
 
+// This method will reflect the new private data member - custTotalWDiscount
 double NewArmy::getCustomerTotals() const {
     return this->custTotalWDiscount;
 }
@@ -101,15 +104,8 @@ void NewArmy::insertCustomerTransactions() {
             // We will supply the buildSQL and execute within the transaction
             pqxx::result insertRes{txn.exec(buildSQL)};
 
-            if (!insertRes.empty()) {
-                int totCol = insertRes.columns();
-                for (auto row: insertRes) {
-                    for (int i = 0; i < totCol; i++) {
-                        std::cout << row[i].c_str() << "|";
-                    }
-                    std::cout << std::endl;
-                }
-            }
+            // display the SQL
+            std::cout << "Query executed for NewArmy Customer transactions: " << buildSQL << std::endl;
         }
         txn.commit();
     }
