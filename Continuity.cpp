@@ -50,15 +50,8 @@ void Continuity::insertCustomerTransactions() {
             // We will supply the buildSQL and execute within the transaction
             pqxx::result insertRes{txn.exec(buildSQL)};
 
-            if (!insertRes.empty()) {
-                int totCol = insertRes.columns();
-                for (auto row: insertRes) {
-                    for (int i = 0; i < totCol; i++) {
-                        std::cout << row[i].c_str() << "|";
-                    }
-                    std::cout << std::endl;
-                }
-            }
+            // display the SQL
+            std::cout << "Query executed for Continuity Customer transactions: " << buildSQL << std::endl;
         }
         txn.commit();
     }
