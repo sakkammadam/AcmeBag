@@ -70,7 +70,3 @@ void Continuity::insertCustomerTransactions() {
     }
 }
 
-void Continuity::entryMethod() {
-    Bag::entryMethod();
-    insertCustomerTransactions();
-}
