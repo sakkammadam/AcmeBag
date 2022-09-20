@@ -8,11 +8,12 @@
 #include <iostream>
 #include <string>
 #include "nlohmann/json.hpp"
-#include "Bag.h"
+#include "Continuity.h"
 
 class NewArmy:
-        public Bag{
+        public Continuity{
 private:
+    // New private data member to take into account new total after applying discounts
     double custTotalWDiscount;
 
 public:
@@ -21,16 +22,14 @@ public:
 
     // This method will calculate the sales totals across all transactions for the customer
     // This method is override in NewArmy to take into account discounts presented to the customer
-    virtual void setCustomerPurchaseTotals();
+    void setCustomerPurchaseTotals() override;
 
-    virtual double getCustomerTotals() const;
+    // This method will reflect the new private data member - custTotalWDiscount
+    double getCustomerTotals() const override;
 
-    // this method will capture the customer's transactions within Continuity brand to its own table
-    // CONTINUITY.CUSTOMER_TRANSACTIONS
-    virtual void insertCustomerTransactions();
-
-    // We will override the entrypoint method to take into account insertCustomerTransactions method
-    // virtual void entryMethod();
+    // this method will capture the customer's transactions within NewArmy brand to its own table
+    // NEWARMY.CUSTOMER_TRANSACTIONS
+    void insertCustomerTransactions() override;
 
 };
 
