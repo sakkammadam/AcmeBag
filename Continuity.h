@@ -20,9 +20,6 @@ public:
     // CONTINUITY.CUSTOMER_TRANSACTIONS
     virtual void insertCustomerTransactions();
 
-    // We will override the entrypoint method to take into account insertCustomerTransactions method
-    virtual void entryMethod();
-
 };
 
 
