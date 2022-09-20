@@ -129,8 +129,6 @@ Bag::Bag(const nlohmann::json &purchase_json) {
     setCustomerPurchaseDetails(purchase_json);
     // set id
     setCustomerId(purchase_json);
-    // calculate purchase totals
-    setCustomerPurchaseTotals();
 }
 
 // Setters
@@ -349,6 +347,7 @@ double Bag::getCustomerTotals() const {
 // Operational Methods
 // Simple display
 void Bag::display() {
+    setCustomerPurchaseTotals();
     std::cout << getCustomerId() << '|' << getCustomerPurchaseTime()
     << '|' << getCustomerFirstName() << '|' << getCustomerLastName() << '|' << getCustomerAddress()
     << '|' << getCustomerCity() << '|' << getCustomerState() << '|' << getCustomerZip()
@@ -543,16 +542,27 @@ void Bag::insertCustomerBrandSaleTotals(){
     }
 }
 
+// This method is left blank and is only used as a reference to lock the entryMethod for derived classes downstream
+void Bag::insertCustomerTransactions(){
+
+}
+
 // Entry method!
 // This is being made virtual so that it's implementation can be overridden in derived class
 // And we want to do this at run-time through a pointer to the base class.
 void Bag::entryMethod() {
     // This will be the primary method for Bag Class
     // Flow -
-    // 1) Check the customerId -
+    // 1) Calculate customerPurchaseTotals
+    // 2) Check the customerId -
     //  a) If -999, this is a new customer, will create an entry in ACME.CUSTOMER table
     //      i) Perform additional checks to see if data is valid or not.
     //  b) If not -999, this is existing customer, will NOT create an entry in ACME.CUSTOMER table
+
+    // Calculate customerPurchaseTotals
+    setCustomerPurchaseTotals();
+
+    // Proceed to write info. to database
     if(getCustomerId() == -999 && getCustomerFirstName() != " " && getCustomerLastName() != " " &&
     getCustomerAddress() != " " && getCustomerState() != " " && getCustomerCity() != " " &&
     getCustomerZip() != " "){
@@ -563,9 +573,14 @@ void Bag::entryMethod() {
         retrieveCustomerIdDB();
         // Insert records into Customer Brand Sales table
         insertCustomerBrandSaleTotals();
+        // Insert records into Customer Transactions table
+        insertCustomerTransactions();
     } else if (getCustomerId() != -999){
-        // This is existing customer flow - insert records into Customer Brand Sales table
+        // This is existing customer flow -
+        // Insert records into Customer Brand Sales table
         insertCustomerBrandSaleTotals();
+        // Insert records into Customer Transactions table
+        insertCustomerTransactions();
     } else {
         throw std::runtime_error("Unexpected behavior path!");
     }
