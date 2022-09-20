@@ -69,7 +69,7 @@ public:
     void setCustomerPurchaseDetails(const nlohmann::json &purchase_json);
 
     // This method will set the Customer's Purchase totals
-    void setCustomerPurchaseTotals();
+    virtual void setCustomerPurchaseTotals();
 
     // This method will set the Customer id
     void setCustomerId(const nlohmann::json &purchase_json);
@@ -106,7 +106,8 @@ public:
     int getCustomerId() const;
 
     // This method will calculate the total of customer's purchases
-    double getCustomerTotals() const;
+    // Making it virtual so that different derived classes can return dedicated private cost data members
+    virtual double getCustomerTotals() const;
 
     // Operational Methods
     // Simple display
@@ -134,7 +135,7 @@ public:
     // Entry method!
     // This is being made virtual so that it's implementation can be overridden in derived class
     // And we want to do this at run-time through a pointer to the base class.
-    virtual void entryMethod();
+    virtual void entryMethod() final;
 
 };
 
